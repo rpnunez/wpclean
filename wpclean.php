@@ -300,3 +300,61 @@ function wpclean_deep_scan_render() {
 // should be implemented if you need to validate/sanitize the options before saving.
 // For checkboxes, ensuring they are '1' or not set is usually sufficient,
 // which the Settings API handles well.
+
+/**
+ * Add meta boxes for the 'wpclean_scan' post type.
+ */
+function wpclean_add_scan_results_meta_box() {
+	add_meta_box(
+		'wpclean_scan_issues_meta_box',          // Unique ID.
+		__( 'Scan Issues Found', 'wpclean' ),    // Box title.
+		'wpclean_scan_issues_meta_box_html',     // Callback function to render HTML.
+		'wpclean_scan',                          // Post type.
+		'normal',                                // Context (normal, side, advanced).
+		'high'                                   // Priority (high, core, default, low).
+	);
+}
+add_action( 'add_meta_boxes_wpclean_scan', 'wpclean_add_scan_results_meta_box' ); // Note the specific hook for the CPT.
+
+/**
+ * Render the HTML for the Scan Issues meta box.
+ *
+ * @param WP_Post $post The post object.
+ */
+function wpclean_scan_issues_meta_box_html( $post ) {
+	// Retrieve the structured issues data.
+	$issues = get_post_meta( $post->ID, '_wpclean_scan_issues_data', true );
+
+	if ( empty( $issues ) || ! is_array( $issues ) ) {
+		echo '<p>' . esc_html__( 'No specific issues data found for this scan, or the data is not in the expected format.', 'wpclean' ) . '</p>';
+		return;
+	}
+
+	echo '<div class="wpclean-issues-list">';
+	echo '<table>';
+	echo '<thead><tr>';
+	echo '<th>' . esc_html__( 'Type', 'wpclean' ) . '</th>';
+	echo '<th>' . esc_html__( 'Description', 'wpclean' ) . '</th>';
+	echo '<th>' . esc_html__( 'Location', 'wpclean' ) . '</th>';
+	echo '<th>' . esc_html__( 'Severity', 'wpclean' ) . '</th>';
+	echo '</tr></thead>';
+	echo '<tbody>';
+
+	foreach ( $issues as $issue ) {
+		echo '<tr>';
+		echo '<td>' . ( isset( $issue['type'] ) ? esc_html( $issue['type'] ) : 'N/A' ) . '</td>';
+		echo '<td>' . ( isset( $issue['description'] ) ? esc_html( $issue['description'] ) : 'N/A' ) . '</td>';
+		echo '<td>' . ( isset( $issue['location'] ) ? esc_html( $issue['location'] ) : 'N/A' ) . '</td>';
+		echo '<td>' . ( isset( $issue['severity'] ) ? esc_html( $issue['severity'] ) : 'N/A' ) . '</td>';
+		// You could add another column for 'data' or a way to expand/view it.
+		echo '</tr>';
+	}
+
+	echo '</tbody>';
+	echo '</table>';
+	echo '</div>';
+
+	// You can add some basic styling for the table if needed, or rely on WordPress admin styles.
+	// Example:
+	// echo '<style>.wpclean-issues-list table { width: 100%; border-collapse: collapse; } .wpclean-issues-list th, .wpclean-issues-list td { border: 1px solid #ddd; padding: 8px; text-align: left; }</style>';
+}
